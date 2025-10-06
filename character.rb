@@ -6,16 +6,15 @@ require_relative 'logger_module'
 
 # Abstract base class for all characters.
 class Character
-  attr_accessor :id, :name, :class_type, :level, :xp, :stats, :current_hp
+  attr_accessor :id, :name, :class_type, :level, :xp, :stats
 
-  def initialize(name:, class_type:, id: nil, level: 1, xp: 0, stats: nil, current_hp: nil)
+  def initialize(name:, class_type:, id: nil, level: 1, xp: 0, stats: nil)
     @id = id || SecureRandom.uuid
     @name = name
     @class_type = class_type
     @level = level
     @xp = xp
     @stats = stats || self.class::BASE_STATS.dup
-    @current_hp = current_hp || @stats['health']
   end
 
   def to_hash
@@ -25,8 +24,7 @@ class Character
       'class' => @class_type,
       'level' => @level,
       'xp' => @xp,
-      'stats' => @stats,
-      'current_hp' => @current_hp
+      'stats' => @stats
     }
   end
 
@@ -46,12 +44,10 @@ class Character
       @xp -= xp_needed_for_next_level
       @level += 1
       leveled = true
-      
     end
     leveled
   end
 
-  
 
   def stats_str
     "HP: #{@stats['health']} | ATK: #{@stats['attack']} | DEF: #{@stats['defense']}"
@@ -62,11 +58,11 @@ class Character
   end
 
   def health
-    @current_hp
+    @stats['health']
   end
 
   def health=(value)
-    @current_hp = value
+    @stats['health'] = [value, 0].max
   end
 
   def defense
@@ -74,7 +70,7 @@ class Character
   end
 
   def defense=(value)
-    @stats['defense'] = value
+    @stats['defense'] = [value, 0].max
   end
 
   def attack
@@ -82,6 +78,6 @@ class Character
   end
 
   def alive?
-    @current_hp > 0
+    @stats['health'] > 0
   end
 end
