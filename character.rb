@@ -1,36 +1,59 @@
 # frozen_string_literal: true
 
 require 'securerandom'
-require 'yaml'
+require 'json'
 require_relative 'logger_module'
 
 # Abstract base class for all characters.
 class Character
-  attr_accessor :id, :name, :class_type, :level, :xp, :stats
+  attr_accessor :id, :name, :class_type, :level, :xp, :health, :attack, :defense
 
-  def initialize(name:, class_type:, id: nil, level: 1, xp: 0, stats: nil)
+  def initialize(name:, base_stats:, id: nil, level: 1, xp: 0)
     @id = id || SecureRandom.uuid
     @name = name
-    @class_type = class_type
+    @class_type = self.class.name
     @level = level
     @xp = xp
-    @stats = stats || self.class::BASE_STATS.dup
+
+    @health  = base_stats['health']
+    @attack  = base_stats['attack']
+    @defense = base_stats['defense']
   end
 
-  def to_hash
+  # ---- JSON Serialization ----
+  def to_json(*_args)
     {
-      'id' => @id,
-      'name' => @name,
-      'class' => @class_type,
-      'level' => @level,
-      'xp' => @xp,
-      'stats' => @stats
-    }
+      id: @id,
+      name: @name,
+      class_type: @class_type,
+      level: @level,
+      xp: @xp,
+      health: @health,
+      attack: @attack,
+      defense: @defense
+    }.to_json
   end
 
+  # ---- JSON Deserialization ----
+  def self.from_json(json_str)
+    data = JSON.parse(json_str)
+    klass = Object.const_get(data['class_type'])
+    klass.new(
+      name: data['name'],
+      id: data['id'],
+      level: data['level'],
+      xp: data['xp'],
+      base_stats: {
+        'health' => data['health'],
+        'attack' => data['attack'],
+        'defense' => data['defense']
+      }
+    )
+  end
+
+  # ---- XP / Level Logic ----
   def gain_xp(amount)
     @xp += amount
-    LoggerModule.log("Player #{@id} gained #{amount} XP (total #{@xp}).")
     check_level_up
   end
 
@@ -45,39 +68,19 @@ class Character
       @level += 1
       leveled = true
     end
-    leveled
+    [leveled, @level]
   end
 
-
+  # ---- Helpers ----
   def stats_str
-    "HP: #{@stats['health']} | ATK: #{@stats['attack']} | DEF: #{@stats['defense']}"
+    "HP: #{@health} | ATK: #{@attack} | DEF: #{@defense}"
   end
 
   def ident
     "#{@name} #{@id}"
   end
 
-  def health
-    @stats['health']
-  end
-
-  def health=(value)
-    @stats['health'] = [value, 0].max
-  end
-
-  def defense
-    @stats['defense']
-  end
-
-  def defense=(value)
-    @stats['defense'] = [value, 0].max
-  end
-
-  def attack
-    @stats['attack']
-  end
-
   def alive?
-    @stats['health'] > 0
+    @health > 0
   end
 end

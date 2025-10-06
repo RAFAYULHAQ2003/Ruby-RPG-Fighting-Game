@@ -11,6 +11,6 @@ class Warrior < Character
   }.freeze
 
   def initialize(**args)
-    super(**args.merge(class_type: 'Warrior'))
+    super(**{ base_stats: BASE_STATS }.merge(args))
   end
 end
