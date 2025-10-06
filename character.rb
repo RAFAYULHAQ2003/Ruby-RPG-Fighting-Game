@@ -4,15 +4,9 @@ require 'securerandom'
 require 'yaml'
 require_relative 'logger_module'
 
-# Represents a playable or non-playable character in the RPG game
+# Abstract base class for all characters.
 class Character
   attr_accessor :id, :name, :class_type, :level, :xp, :stats, :current_hp
-
-  CLASS_BASE = {
-    'Warrior' => { 'health' => 120, 'attack' => 20, 'defense' => 15 },
-    'Mage' => { 'health' => 80, 'attack' => 25, 'defense' => 8 },
-    'Rogue' => { 'health' => 100, 'attack' => 18, 'defense' => 10 }
-  }.freeze
 
   def initialize(name:, class_type:, id: nil, level: 1, xp: 0, stats: nil, current_hp: nil)
     @id = id || SecureRandom.uuid
@@ -20,10 +14,7 @@ class Character
     @class_type = class_type
     @level = level
     @xp = xp
-    @stats = stats || CLASS_BASE[class_type].clone
-    if current_hp
-      @stats['health'] = current_hp
-    end  
+    @stats = stats || self.class::BASE_STATS.dup
     @current_hp = current_hp || @stats['health']
   end
 
@@ -55,12 +46,12 @@ class Character
       @xp -= xp_needed_for_next_level
       @level += 1
       leveled = true
-      message = "Player #{@id} (#{@name}) reached Level #{@level}!"
-      puts message
-      LoggerModule.log(message)
+      
     end
     leveled
   end
+
+  
 
   def stats_str
     "HP: #{@stats['health']} | ATK: #{@stats['attack']} | DEF: #{@stats['defense']}"
@@ -69,7 +60,6 @@ class Character
   def ident
     "#{@name} #{@id}"
   end
-
 
   def health
     @current_hp
@@ -80,19 +70,18 @@ class Character
   end
 
   def defense
-    @stats["defense"]
+    @stats['defense']
   end
 
   def defense=(value)
-    @stats["defense"] = value
+    @stats['defense'] = value
   end
 
   def attack
-    @stats["attack"]
+    @stats['attack']
   end
 
   def alive?
     @current_hp > 0
   end
-
 end
