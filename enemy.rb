@@ -16,8 +16,8 @@ class Enemy
     @id = SecureRandom.uuid
     @name = type
     @level = level
-    
-     @health, @attack, @defense = ENEMY_TYPES[type].values_at(:base_health, :base_attack, :base_defense)
+
+    @health, @attack, @defense = ENEMY_TYPES[type].values_at(:base_health, :base_attack, :base_defense)
   end
 
   def ident

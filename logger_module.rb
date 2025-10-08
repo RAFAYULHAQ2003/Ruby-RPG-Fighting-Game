@@ -7,7 +7,6 @@ require 'fileutils'
 module LoggerModule
   LOG_FILE = 'battle_log.txt'
 
-  # Ensure log file exists
   def self.ensure_log
     FileUtils.touch(LOG_FILE) unless File.exist?(LOG_FILE)
   end
@@ -15,6 +14,7 @@ module LoggerModule
   def self.log(message)
     ensure_log
     timestamp = Time.now.strftime('%Y-%m-%d %H:%M:%S')
+
     File.open(LOG_FILE, 'a') do |f|
       f.puts("[#{timestamp}] #{message}")
     end

@@ -7,6 +7,7 @@ require_relative 'characters/warrior'
 require_relative 'characters/mage'
 require_relative 'characters/rogue'
 
+# To save serilized or deserilized in json file
 class SaveManager
   SAVE_DIR = 'saves'
 
@@ -31,8 +32,8 @@ class SaveManager
     ensure_dir
     path = File.join(SAVE_DIR, filename)
     json_data = File.read(path)
-    char = Character.from_json(json_data)
-    LoggerModule.log("Loaded #{char.ident} from #{path}")
-    char
+    character = Character.from_json(json_data)
+    LoggerModule.log("Loaded #{character.ident} from #{path}")
+    character
   end
 end

@@ -22,16 +22,22 @@ def prompt_main_menu
   gets.chomp
 end
 
-
 def choose_class
   puts 'Choose class:'
   character_classes = Character.subclasses
-  character_classes.each_with_index { |klass, i| puts "#{i + 1}. #{klass.name}" }
+  list_classes(character_classes)
+  pick_class(character_classes)
+end
+
+def list_classes(classes)
+  classes.each_with_index { |klass, i| puts "#{i + 1}. #{klass.name}" }
+end
+
+def pick_class(classes)
   loop do
     print '> '
-    input = $stdin.gets&.chomp
-    idx = input.to_i
-    return character_classes[idx - 1] if idx.between?(1, character_classes.size)
+    idx = $stdin.gets&.chomp.to_i
+    return classes[idx - 1] if idx.between?(1, classes.size)
 
     puts 'Invalid selection. Choose a valid class number.'
   end
@@ -56,7 +62,6 @@ def create_new_character
   LoggerModule.log("Created new character: #{char.ident} (class #{char.class_type}).")
   char
 end
-
 
 def load_character_flow
   saves = SaveManager.list_saves
@@ -101,41 +106,45 @@ end
 
 def game_loop(character)
   loop do
-    enemy = CombatEngine.random_enemy_for(character)
-    engine = CombatEngine.new(character)
-    result = engine.fight(enemy)
-    case result
-    when :won
-
-      post_battle_menu(character)
-    when :ran
-      puts 'You live to fight another day...'
-    when :lost
-      puts "Game over for #{character.name}."
-      break
-    end
-
-    puts 'Continue exploring? (y/n)'
-    print '> '
-    input = $stdin.gets&.chomp&.downcase
-    break unless %w[y yes].include?(input)
+    result = start_battle(character)
+    break if handle_battle_result(result, character)
   end
+end
+
+def start_battle(character)
+  enemy = CombatEngine.random_enemy_for(character)
+  engine = CombatEngine.new(character)
+  engine.fight(enemy)
+end
+
+def handle_battle_result(result, character)
+  case result
+  when :won then post_battle_menu(character)
+  when :ran then puts 'You live to fight another day...'
+  when :lost
+    puts "Game over for #{character.name}."
+    return true
+  end
+  !continue_exploring?
+end
+
+def continue_exploring?
+  puts 'Continue exploring? (y/n)'
+  print '> '
+  %w[y yes].include?($stdin.gets&.chomp&.downcase)
 end
 
 def post_battle_menu(character)
   loop do
-    puts "\nDo you want to save progress? (y/n)"
-    print '> '
+    print "\nSave progress? (y/n): "
     input = $stdin.gets&.chomp&.downcase
+    return if %w[n no].include?(input)
 
     if %w[y yes].include?(input)
       SaveManager.save(character)
-      break
-    elsif %w[n no].include?(input)
-      break
-    else
-      puts 'Please answer y or n.'
+      return
     end
+    puts 'Please answer y or n.'
   end
 end
 
@@ -143,24 +152,35 @@ def run
   LoggerModule.ensure_log
   loop do
     clear_screen
-    choice = prompt_main_menu
-    case choice
-    when '1'
-      char = create_new_character
-      game_loop(char)
-    when '2'
-      char = load_character_flow
-      game_loop(char) if char
-    when '3'
-      puts 'Goodbye!'
-      break
-    else
-      puts 'Invalid option. Try again.'
-    end
+    handle_menu_choice(prompt_main_menu)
     puts 'Press Enter to return to main menu...'
     $stdin.gets
   end
 end
 
-# Start game
+def handle_menu_choice(choice)
+  case choice
+  when '1' then start_new_game
+  when '2' then load_game_flow
+  when '3' then exit_game
+  else
+    puts 'Invalid option. Try again.'
+  end
+end
+
+def start_new_game
+  char = create_new_character
+  game_loop(char)
+end
+
+def load_game_flow
+  char = load_character_flow
+  game_loop(char) if char
+end
+
+def exit_game
+  puts 'Goodbye!'
+  exit
+end
+
 run if __FILE__ == $PROGRAM_NAME

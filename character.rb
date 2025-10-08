@@ -8,12 +8,12 @@ require_relative 'logger_module'
 class Character
   attr_accessor :id, :name, :class_type, :level, :xp, :health, :attack, :defense
 
-  def initialize(name:, base_stats:, id: nil, level: 1, xp: 0)
+  def initialize(name:, base_stats:, id: nil, level: 1, xpo: 0)
     @id = id || SecureRandom.uuid
     @name = name
     @class_type = self.class.name
     @level = level
-    @xp = xp
+    @xp = xpo
 
     @health  = base_stats['health']
     @attack  = base_stats['attack']
@@ -27,14 +27,13 @@ class Character
       name: @name,
       class_type: @class_type,
       level: @level,
-      xp: @xp,
+      xp: @xpo,
       health: @health,
       attack: @attack,
       defense: @defense
     }.to_json
   end
 
-  # ---- JSON Deserialization ----
   def self.from_json(json_str)
     data = JSON.parse(json_str)
     klass = Object.const_get(data['class_type'])
@@ -42,16 +41,11 @@ class Character
       name: data['name'],
       id: data['id'],
       level: data['level'],
-      xp: data['xp'],
-      base_stats: {
-        'health' => data['health'],
-        'attack' => data['attack'],
-        'defense' => data['defense']
-      }
+      xpo: data['xp'],
+      base_stats: { 'health' => data['health'], 'attack' => data['attack'], 'defense' => data['defense'] }
     )
   end
 
-  # ---- XP / Level Logic ----
   def gain_xp(amount)
     @xp += amount
     check_level_up
@@ -81,6 +75,6 @@ class Character
   end
 
   def alive?
-    @health > 0
+    @health.positive?
   end
 end
