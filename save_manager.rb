@@ -2,7 +2,6 @@
 
 require 'json'
 require_relative 'logger_module'
-require_relative 'character'
 require_relative 'characters/warrior'
 require_relative 'characters/mage'
 require_relative 'characters/rogue'
