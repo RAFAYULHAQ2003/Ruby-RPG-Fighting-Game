@@ -6,14 +6,14 @@ require_relative 'logger_module'
 
 # Abstract base class for all characters.
 class Character
-  attr_accessor :id, :name, :class_type, :level, :xp, :health, :attack, :defense
+  attr_accessor :id, :name, :class_type, :level, :experience, :health, :attack, :defense
 
-  def initialize(name:, base_stats:, id: nil, level: 1, xp: 0)
+  def initialize(name:, base_stats:, id: nil, level: 1, experience: 0)
     @id = id || SecureRandom.uuid
     @name = name
     @class_type = self.class.name
     @level = level
-    @xp = xp
+    @experience = experience
 
     @health  = base_stats['health']
     @attack  = base_stats['attack']
@@ -27,14 +27,13 @@ class Character
       name: @name,
       class_type: @class_type,
       level: @level,
-      xp: @xp,
+      experience: @experience,
       health: @health,
       attack: @attack,
       defense: @defense
     }.to_json
   end
 
-  # ---- JSON Deserialization ----
   def self.from_json(json_str)
     data = JSON.parse(json_str)
     klass = Object.const_get(data['class_type'])
@@ -42,18 +41,13 @@ class Character
       name: data['name'],
       id: data['id'],
       level: data['level'],
-      xp: data['xp'],
-      base_stats: {
-        'health' => data['health'],
-        'attack' => data['attack'],
-        'defense' => data['defense']
-      }
+      experience: data['experience'],
+      base_stats: { 'health' => data['health'], 'attack' => data['attack'], 'defense' => data['defense'] }
     )
   end
 
-  # ---- XP / Level Logic ----
   def gain_xp(amount)
-    @xp += amount
+    @experience += amount
     check_level_up
   end
 
@@ -63,8 +57,8 @@ class Character
 
   def check_level_up
     leveled = false
-    while @xp >= xp_needed_for_next_level
-      @xp -= xp_needed_for_next_level
+    while @experience >= xp_needed_for_next_level
+      @experience -= xp_needed_for_next_level
       @level += 1
       leveled = true
     end
@@ -81,6 +75,6 @@ class Character
   end
 
   def alive?
-    @health > 0
+    @health.positive?
   end
 end
